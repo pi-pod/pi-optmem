@@ -2,3 +2,5 @@ anim/node_modules/
 anim/frames/
 anim/shots/
 .DS_Store
+.pi/
+__pycache__/
