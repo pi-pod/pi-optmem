@@ -9,18 +9,23 @@ and vendor changes.
 ## Install
 
 ```sh
-pi install git:github.com/pi-pod/pi-optmem
+pi install npm:pi-optmem
 ```
 
 Python 3.7 or newer is required. Restart pi after installation. On the first
-session, the extension creates
-`~/.optmem/memory`. It then wakes automatically before the first model turn;
-there is no `AGENTS.md` block to paste.
+session, the extension creates `~/.optmem/memory`. It then wakes automatically
+before the first model turn; there is no `AGENTS.md` block to paste.
 
 Use a project-local installation with:
 
 ```sh
-pi install -l git:github.com/pi-pod/pi-optmem
+pi install -l npm:pi-optmem
+```
+
+To install the latest unreleased source directly from GitHub instead:
+
+```sh
+pi install git:github.com/pi-pod/pi-optmem
 ```
 
 Update later with `pi update --extensions`.
