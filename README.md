@@ -1,106 +1,95 @@
-# OptMem
+# OptMem for pi
 
-Permanent memory for AI agents. A 426-token prompt, a script, plug and play.
+Permanent memory for pi agents. OptMem keeps an append-only log and a compact
+binary summary tree, so memory survives sessions, compaction, model changes,
+and vendor changes.
 
-![how OptMem works](anim/optmem.gif)
+![how OptMem works](https://raw.githubusercontent.com/pi-pod/pi-optmem/main/anim/optmem.gif)
 
 ## Install
+
+```sh
+pi install git:github.com/pi-pod/pi-optmem
+```
+
+Python 3.7 or newer is required. Restart pi after installation. On the first
+session, the extension creates
+`~/.optmem/memory`. It then wakes automatically before the first model turn;
+there is no `AGENTS.md` block to paste.
+
+Use a project-local installation with:
+
+```sh
+pi install -l git:github.com/pi-pod/pi-optmem
+```
+
+Update later with `pi update --extensions`.
+
+## What the extension does
+
+- Runs `memo wake` at every pi session start and injects the result into the
+  first turn.
+- Registers the `optmem` tool for recording, compressing, searching, and
+  navigating memory.
+- Adds concise system guidance so durable facts and completed work are noted,
+  and requested compressions are completed immediately.
+- Initializes a missing memory store only after the extension is deliberately
+  installed and started.
+
+The agent-facing tool supports these actions:
+
+| Action | Purpose | Fields |
+|---|---|---|
+| `note` | Save one durable, non-redundant memory | `text` |
+| `nap` | Ask for the next compression, or submit one | none, or `block` + `text` |
+| `recall` | Search every raw memory with a regex | `query` |
+| `zoom` | Open a summary block into its halves | `block` |
+| `wake` | Continue paged startup output | optional `part` + `snapshot` |
+| `forget` | Drop a bad summary so it can be rebuilt | `block` |
+
+## Storage and configuration
+
+```
+~/.optmem/
+  memory/
+    LOG.txt     every memory, append-only
+    TREE/       rebuildable summary cache
+    config      size settings
+```
+
+Set `MEMORY_DIR` before starting pi to use another location, such as a synced
+folder or Git repository.
+
+The bundled `memo` program remains the storage engine. To inspect or tune a
+store outside pi, run it from this checkout:
+
+```sh
+./memo config
+./memo config WAKE_LINES=300
+./memo recall 'project name'
+```
+
+Never edit `LOG.txt` or `TREE/` directly.
+
+## Standalone CLI integration
+
+OptMem can still be installed for other agent harnesses with the original
+single-file installer:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/VictorTaelin/OptMem/main/install.sh | sh
 ```
 
-It prints a `## Memory` block. Paste that at the top of your agent's
-`AGENTS.md` (or `CLAUDE.md`), and you are done. Run the same line again to
-update.
+That installer prints the instruction block used by non-pi agents. The pi
+extension does not need it.
 
-The tool lands at `~/.optmem/memo`; put `~/.optmem` on `PATH` to type `memo`.
-
-## Commands
-
-| | |
-|---|---|
-| `memo wake` | read the memory — the first command of every session |
-| `memo note "..."` | record one memory: one line, up to 280 chars |
-| `memo nap` | answer the merges that came due |
-| `memo recall <regex>` | search every memory ever recorded, word for word |
-| `memo zoom <lo>-<hi>` | open a tree node into its two halves |
-| `memo forget <lo>-<hi>` | drop a bad summary; the next nap rebuilds it |
-
-Merges arrive one at a time, in the output of `note`. Nothing ever runs in the
-background.
-
-## Files
-
-```
-~/.optmem/
-  memo          the tool: one file of Python 3, no dependencies
-  memory/
-    LOG.txt     every memory, one per line, append-only, never edited
-    TREE/       the summaries: a cache, rebuildable from the log alone
-    config      the sizes, written by `memo config`
-```
+## Development
 
 ```sh
-memo config                  # show the sizes
-memo config WAKE_LINES=300   # how many lines wake prints (208 ≈ 16k tokens)
-memo config WAKE_LINES=      # back to the default
+python3 test.py
+pi -e .
 ```
 
-`WAKE_LINES` is the only size worth touching, and it is a reading budget, not
-a storage budget: change it whenever, in either direction, and nothing is
-recomputed.
-
-Records are fixed width, so position *is* identity and every lookup is one
-seek. At a million memories (608 MB), `wake` takes 0.03s.
-
-Set `$MEMORY_DIR` to keep `memory/` elsewhere — a synced folder, a git repo.
-
-## The prompt
-
-This is what the installer prints, and the whole of the integration.
-
-```markdown
-## Memory
-
-Your memory is OptMem:
-- The tool is `~/.optmem/memo`
-- Your memories are in `~/.optmem/memory`
-
-OptMem outlives every session, compaction, model and vendor change.
-Without it you do not know who you are, or what was decided and tried.
-
-### At startup: activating OptMem (mandatory)
-
-Run `~/.optmem/memo wake` before any other tool call, in every session, and
-then do exactly what it prints, to the end of its output.
-
-### While working: register memories (mandatory)
-
-Call `~/.optmem/memo note "<1 line, max 280 chars>"` whenever you learn
-something new, or something worth keeping happens. That covers a task
-worth real effort, a fact or insight the user teaches you, anything you
-learn about their life (even indirectly), any event of lasting effect.
-
-Do not register redundant memories.
-
-If `~/.optmem/memo note` asks a compression: do it before your next action.
-
-Never edit or delete anything under `~/.optmem/memory`: the tool manages it.
-
-### When you need an old memory: search, or navigate
-
-`~/.optmem/memo recall <regex>` searches every memory, word for word.
-
-Your memories also form a binary tree: #0-1, #2-3 ... exist as one-line
-summaries, pairs of those as #0-3, and so on -- every `#a-b` line wake
-prints is one node of it. `~/.optmem/memo zoom <a-b>` opens a node into its
-two halves, down to the raw memories.
-
-### If you're a subagent: skip everything above
-
-Parallel sessions on this machine are all you, and may all write memories.
-A subagent is not: it must never run `memo`, because it cannot judge what
-is already known, and its notes would arrive duplicated and incorrectly.
-When you spawn one, write: `You are a subagent. Don't run memo.`
-```
+The Python test suite checks tree coverage, persistence, paging, UTF-8,
+concurrency, and crash recovery. `pi -e .` loads this repository as a
+temporary package for interactive testing.

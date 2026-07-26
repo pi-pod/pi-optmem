@@ -1,0 +1,38 @@
+{
+  "name": "pi-optmem",
+  "version": "1.0.0",
+  "description": "Permanent, append-only memory for pi agents",
+  "type": "module",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "agent-memory"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pi-pod/pi-optmem.git"
+  },
+  "files": [
+    "extension.ts",
+    "memo",
+    "test.py",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "python3 test.py"
+  },
+  "pi": {
+    "extensions": [
+      "./extension.ts"
+    ],
+    "video": "https://raw.githubusercontent.com/pi-pod/pi-optmem/main/anim/optmem.mp4",
+    "image": "https://raw.githubusercontent.com/pi-pod/pi-optmem/main/anim/optmem.gif"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}
