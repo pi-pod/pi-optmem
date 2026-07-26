@@ -10,7 +10,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/pi-pod/pi-optmem.git"
+    "url": "git+https://github.com/pi-pod/pi-optmem.git"
+  },
+  "homepage": "https://github.com/pi-pod/pi-optmem#readme",
+  "bugs": {
+    "url": "https://github.com/pi-pod/pi-optmem/issues"
   },
   "files": [
     "extension.ts",
@@ -34,5 +38,8 @@
   },
   "engines": {
     "node": ">=22.19.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
